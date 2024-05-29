@@ -17,11 +17,44 @@ import cv2
 import sys
 import random
 random.seed(0)
+import numpy
 
 import cityscapesScripts.cityscapesscripts.evaluation.instances2dict_with_polygons as cs
-import detectron.utils.segms as segms_util
-import detectron.utils.boxes as bboxs_util
 from cityscapesScripts.cityscapesscripts.helpers.labels import *
+
+
+## Imported functions from bbox_utils.py (detectron packcage)
+
+def polys_to_boxes(polys):
+    """Convert a list of polygons into an array of tight bounding boxes."""
+    boxes_from_polys = numpy.zeros((len(polys), 4), dtype=numpy.float32)
+    for i in range(len(polys)):
+        poly = polys[i]
+        x0 = min(min(p[::2]) for p in poly)
+        x1 = max(max(p[::2]) for p in poly)
+        y0 = min(min(p[1::2]) for p in poly)
+        y1 = max(max(p[1::2]) for p in poly)
+        boxes_from_polys[i, :] = [x0, y0, x1, y1]
+
+    return boxes_from_polys
+
+
+def xyxy_to_xywh(xyxy):
+    """Convert [x1 y1 x2 y2] box format to [x1 y1 w h] format."""
+    if isinstance(xyxy, (list, tuple)):
+        # Single box given as a list of coordinates
+        assert len(xyxy) == 4
+        x1, y1 = xyxy[0], xyxy[1]
+        w = xyxy[2] - x1 + 1
+        h = xyxy[3] - y1 + 1
+        return (x1, y1, w, h)
+    elif isinstance(xyxy, numpy.ndarray):
+        # Multiple boxes given as a 2D ndarray
+        return numpy.hstack((xyxy[:, 0:2], xyxy[:, 2:4] - xyxy[:, 0:2] + 1))
+    else:
+        raise TypeError('Argument xyxy must be a list, tuple, or numpy array.')
+
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert dataset')
@@ -42,14 +75,14 @@ def getLabelID(self, instID):
 def convert_cityscapes_instance_only(data_dir, out_dir):
     """Convert from cityscapes format to COCO instance seg format - polygons"""
     sets = args.set.split(',')
+    ann_dirs = []
     for i in sets:
-        if i == 'train' or i == 'val':
-            ann_dirs = ['train/images','val/images']
+        if i == 'train':
+            ann_dirs.append('train/images')
+        elif i == 'val':
+            ann_dirs.append('val/images')
         elif i == 'test': # NEED TEST MASK ANNOTATIONS
-            ann_dirs = ['test/images']
-        else:
-            print('Invalid input')
-
+            ann_dirs.append('test/images')
     json_name = 'instancesonly_filtered_%s.json'
     img_id = 0
     ann_id = 0
@@ -143,7 +176,7 @@ def convert_cityscapes_instance_only(data_dir, out_dir):
                                 ann['category_name'] = object_cls
                                 ann['iscrowd'] = 0
                                 ann['area'] = obj['pixelCount']
-                                ann['bbox'] = bboxs_util.xyxy_to_xywh(segms_util.polys_to_boxes([ann['segmentation']])).tolist()[0]
+                                ann['bbox'] = xyxy_to_xywh(polys_to_boxes([ann['segmentation']])).tolist()[0]
 
                                 #annotations.append(ann)
                                 if ann['area'] > 10:

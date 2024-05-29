@@ -13,14 +13,14 @@ from collections import namedtuple
 import logging 
 import traceback
 
-# Image processing
-# Check if PIL is actually Pillow as expected
-try:
-    from PIL import PILLOW_VERSION
-except:
-    print("Please install the module 'Pillow' for image processing, e.g.")
-    print("pip install pillow")
-    sys.exit(-1)
+# # Image processing
+# # Check if PIL is actually Pillow as expected
+# try:
+#     from PIL import PILLOW_VERSION
+# except:
+#     print("Please install the module 'Pillow' for image processing, e.g.")
+#     print("pip install pillow")
+#     sys.exit(-1)
 
 try:
     import PIL.Image     as Image
@@ -38,8 +38,8 @@ except:
 
 # Cityscapes modules
 try:
-    from cityscapesscripts.helpers.annotation import Annotation
-    from cityscapesscripts.helpers.labels import labels, name2label, id2label, trainId2label, category2labels
+    from cityscapesScripts.cityscapesscripts.helpers.annotation import Annotation
+    from cityscapesScripts.cityscapesscripts.helpers.labels import labels, name2label, id2label, trainId2label, category2labels
 except ImportError as err:
     print("Failed to import all Cityscapes modules: %s" % err)
     sys.exit(-1)

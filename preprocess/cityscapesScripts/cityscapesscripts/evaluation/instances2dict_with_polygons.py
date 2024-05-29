@@ -10,12 +10,11 @@ sys.path.append( os.path.normpath( os.path.join( os.path.dirname( __file__ ) , '
 from csHelpers import *
 
 # Cityscapes imports
-from cityscapesscripts.evaluation.instance import *
-from cityscapesscripts.helpers.csHelpers import *
-from cityscapesscripts.helpers.labels import *
+from cityscapesScripts.cityscapesscripts.evaluation.instance import *
+from cityscapesScripts.cityscapesscripts.helpers.csHelpers import *
+from cityscapesScripts.cityscapesscripts.helpers.labels import *
 
 import cv2
-import lycon
 #from create_dataset.utils import cv2_util
 
 
@@ -51,8 +50,8 @@ def instances2dict_with_polygons(seg_imageFileList,ins_imageFileList,verbose=Fal
     for imageFileName_seg,imageFileName_ins in zip(seg_imageFileList,ins_imageFileList):
         print("Segment file:",imageFileName_seg)
         print("Instance files:",imageFileName_ins)
-        img = lycon.load(imageFileName_ins) # (1738, 1956, 3)
-        img_seg = lycon.load(imageFileName_seg) # (1738, 1956, 3) segmentation file
+        img = cv2.cvtColor(cv2.imread(imageFileName_ins), cv2.COLOR_BGR2RGB) # (1738, 1956, 3)
+        img_seg = cv2.cvtColor(cv2.imread(imageFileName_seg), cv2.COLOR_BGR2RGB) # (1738, 1956, 3) segmentation file
 
         # Image as numpy array
         imgNp = np.array(img) # Gives h * w * 3 matrix

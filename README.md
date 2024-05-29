@@ -59,14 +59,14 @@
         ```ln -s /path-of-iSAID-dataset ./dataset/```
     
     5. Split training and validation images into patches
-        ```python split.py --set train,val```
+        ```python3 split.py --source ./dataset/iSAID_for_evaluation --target ./dataset/iSAID_for_evaluation_patches --set train,val```
     
     6. Split test images into patches
         ```python split.py --set test```
     
     7. Create coco-format json annotation files for train and val split images
         ```python preprocess.py --set train,val```
-
+        ```python3 preprocess.py --datadir /mnt/h/ml_data/datasets/iSAID_for_evaluation --outdir /mnt/h/ml_data/datasets/iSAID_for_evaluation_patches/ --set train,val```
 
         
         Make sure that the final dataset after preprocesing must have this structure:
