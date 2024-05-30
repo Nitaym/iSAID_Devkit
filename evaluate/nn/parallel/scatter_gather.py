@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 from ._functions import Scatter, Gather
-from torch._six import string_classes, int_classes
 from torch.utils.data.dataloader import numpy_type_map
 
 

@@ -66,10 +66,10 @@
     
     7. Create coco-format json annotation files for train and val split images
         ```python preprocess.py --set train,val```
-        ```python3 preprocess.py --datadir /mnt/h/ml_data/datasets/iSAID_for_evaluation --outdir /mnt/h/ml_data/datasets/iSAID_for_evaluation_patches/ --set train,val```
+        ```python3 preprocess.py --datadir /mnt/h/ml_data/datasets/iSAID_for_evaluation_patches --outdir /mnt/h/ml_data/datasets/iSAID_for_evaluation_patches/ --set train,val```
 
         
-        Make sure that the final dataset after preprocesing must have this structure:
+        Make sure that the final dataset after preprocesing must have this structure (also make sure all instance_only_filtered_*.json files are not empty):
 
     ```
     iSAID_patches
@@ -104,6 +104,9 @@
     1. Run your instance segmentation method on patches and generate json file of predictions
 
 4. **Evaluation**
+    Go to evaluate/utils
+    `python3 setup.py build_ext --inplace`
+
     1. Change the current working directory to evaluate folder.
         ```cd ../evaluate```
     3. Given json of predictions and json of val set ground truth (obtained after preprocess.py), Compute Average Precision

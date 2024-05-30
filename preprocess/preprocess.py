@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
+from pathlib import Path
 from natsort import natsorted
 import re
 import argparse
@@ -16,6 +17,8 @@ import sys
 import cv2
 import sys
 import random
+
+import tqdm
 random.seed(0)
 import numpy
 
@@ -112,75 +115,68 @@ def convert_cityscapes_instance_only(data_dir, out_dir):
         ann_dict = {}
         images = []
         annotations = []
-        ann_dir = os.path.join(data_dir, ann_dir)
-        print(ann_dir)
+        ann_dir = Path(data_dir) / ann_dir
+        print(f'Processing {ann_dir}')
         img_id = 0 # for every image_id with different indexing
-        c_images = 0
-        for root, _, files in os.walk(ann_dir):
-            for filename in natsorted(files):
-                if filename.endswith('_color_RGB.png'): #if re.match(r'\w*\d+.png', filename) or filename.split('.')[0].count('_')==4:
-                    #import pdb;pdb.set_trace()
-                    c_images+=1
-                    filename = ''.join(filename)
-                    filename = filename.split('_')[:-3]
-                    if len(filename) > 1:
-                        filename = '_'.join(filename)
-                    else:
-                        filename = ''.join(filename)
-                    filename = filename + '.png'
-                    print("Processed %s images" % (c_images))
-                    image_dim = cv2.imread(os.path.join(root,filename))
-                    imgHeight,imgWidth,_  = image_dim.shape
-                    image = {}
-                    image['id'] = img_id
-                    img_id += 1
-                    image['width'] = imgWidth
-                    image['height'] = imgHeight
-                    print("Processing Image",filename)
-                    image['file_name'] = filename.split('.')[0] + '.png'
-                    print("Processing Image",image['file_name'])
-                    image['ins_file_name'] = filename.split('.')[0] + '_instance_id_RGB.png'
-                    image['seg_file_name'] = filename.split('.')[0] + '_instance_color_RGB.png'
-                    images.append(image)
 
-                    #import pdb;pdb.set_trace()
-                    seg_fullname = os.path.join(root, image['seg_file_name'])
-                    inst_fullname = os.path.join(root, image['ins_file_name'])
+        # Filter - Only run on _instance_color_RGB.png files to avoid duplicates
+        files = list(ann_dir.glob('*_color_RGB.png'))
+        # total_image_count = len(files)
+        # for c_images, filename_image_instance in tqdm.tqdm(enumerate(files)):
+        for filename_image_instance in tqdm.tqdm(files):
+            filename_image_original = filename_image_instance.parent / filename_image_instance.name.replace('_instance_color_RGB.png', '.png')
+            filename_image_segmented = filename_image_instance.parent / (filename_image_original.stem + '_instance_id_RGB.png')
+            # print(f'[{c_images}/{total_image_count}] Processing {filename_image_original}')
 
-                    if not os.path.exists(seg_fullname):
-                        print("YOU DONT HAVE TEST MASKS")
-                        sys.exit(0)
-                    objects = cs.instances2dict_with_polygons([seg_fullname],[inst_fullname], verbose=True)
-                    for k,v in objects.items():
-                        for object_cls in list(v.keys()):
-                            if object_cls not in category_instancesonly: #to get the labels only mentioned in category_instancesonly
-                                continue
-                            for obj in v[object_cls]:
-                                if obj['contours'] == []:
-                                    print('Warning: empty contours.')
-                                    continue  
-                                len_p = [len(p) for p in obj['contours']]
-                                if min(len_p) <= 4:
-                                    print('Warning: invalid contours.')
-                                    continue 
+            # print("Processed %s images" % (c_images))
+            image_dim = cv2.imread(str(filename_image_original))
+            imgHeight,imgWidth,_  = image_dim.shape
+            image = {}
+            image['id'] = img_id
+            img_id += 1
+            image['width'] = imgWidth
+            image['height'] = imgHeight
+            # print("Processing Image",filename)
+            image['file_name'] = filename_image_original.name
+            # print("Processing Image",image['file_name'])
+            image['ins_file_name'] = filename_image_instance.name
+            image['seg_file_name'] = filename_image_segmented.name
+            images.append(image)
 
-                                ann = {}
-                                ann['id'] = ann_id
-                                ann_id += 1
-                                ann['image_id'] = image['id']
-                                ann['segmentation'] = obj['contours']
-                                if object_cls not in category_dict:
-                                    category_dict[object_cls] = label2id[object_cls]
+            if not filename_image_segmented.exists():
+                print("YOU DONT HAVE TEST MASKS")
+                sys.exit(0)
+            objects = cs.instances2dict_with_polygons([str(filename_image_instance)],[str(filename_image_segmented)], verbose=False)
+            for k,v in objects.items():
+                for object_cls in list(v.keys()):
+                    if object_cls not in category_instancesonly: #to get the labels only mentioned in category_instancesonly
+                        continue
+                    for obj in v[object_cls]:
+                        if obj['contours'] == []:
+                            print(f'[{filename_image_original.name}] Warning: empty contours.')
+                            continue  
+                        len_p = [len(p) for p in obj['contours']]
+                        if min(len_p) <= 4:
+                            print(f'[{filename_image_original.name}] Warning: invalid contours.')
+                            continue 
 
-                                ann['category_id'] = category_dict[object_cls]
-                                ann['category_name'] = object_cls
-                                ann['iscrowd'] = 0
-                                ann['area'] = obj['pixelCount']
-                                ann['bbox'] = xyxy_to_xywh(polys_to_boxes([ann['segmentation']])).tolist()[0]
+                        ann = {}
+                        ann['id'] = ann_id
+                        ann_id += 1
+                        ann['image_id'] = image['id']
+                        ann['segmentation'] = obj['contours']
+                        if object_cls not in category_dict:
+                            category_dict[object_cls] = label2id[object_cls]
 
-                                #annotations.append(ann)
-                                if ann['area'] > 10:
-                                    annotations.append(ann)
+                        ann['category_id'] = category_dict[object_cls]
+                        ann['category_name'] = object_cls
+                        ann['iscrowd'] = 0
+                        ann['area'] = obj['pixelCount']
+                        ann['bbox'] = xyxy_to_xywh(polys_to_boxes([ann['segmentation']])).tolist()[0]
+
+                        #annotations.append(ann)
+                        if ann['area'] > 10:
+                            annotations.append(ann)
 
         ann_dict['images'] = images
         categories = [{"id": category_dict[name], "name": name} for name in category_dict]

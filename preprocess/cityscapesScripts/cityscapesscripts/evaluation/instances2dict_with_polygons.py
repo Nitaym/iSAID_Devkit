@@ -47,9 +47,12 @@ def instances2dict_with_polygons(seg_imageFileList,ins_imageFileList,verbose=Fal
         print("Processing {} images...".format(len(seg_imageFileList)))
         print("Processing {} images...".format(len(ins_imageFileList)))
 
+
     for imageFileName_seg,imageFileName_ins in zip(seg_imageFileList,ins_imageFileList):
-        print("Segment file:",imageFileName_seg)
-        print("Instance files:",imageFileName_ins)
+        if verbose:
+            print("Segment file:",imageFileName_seg)
+            print("Instance files:",imageFileName_ins)
+
         img = cv2.cvtColor(cv2.imread(imageFileName_ins), cv2.COLOR_BGR2RGB) # (1738, 1956, 3)
         img_seg = cv2.cvtColor(cv2.imread(imageFileName_seg), cv2.COLOR_BGR2RGB) # (1738, 1956, 3) segmentation file
 
@@ -67,7 +70,7 @@ def instances2dict_with_polygons(seg_imageFileList,ins_imageFileList,verbose=Fal
         for label in labels:
             instances[label.name] = []
 
-        # Loop through all instance ids in instance image
+        # Loop through all instance ids in instance image - Instance IDs are the encoded colors in the instance image
         for instanceId in np.unique(imgNp): #np.unique(imgNp)
         #for instanceId in np.unique(imgNp):
             if instanceId < 1000:

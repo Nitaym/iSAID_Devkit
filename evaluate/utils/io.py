@@ -7,10 +7,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from six.moves import cPickle as pickle
 import hashlib
 import logging
 import os
+from pathlib import Path
+import pickle
 import re
 import sys
 try:
@@ -23,10 +24,10 @@ logger = logging.getLogger(__name__)
 _DETECTRON_S3_BASE_URL = 'https://s3-us-west-2.amazonaws.com/detectron'
 
 
-def save_object(obj, file_name):
+def save_object(obj, file_name: Path):
     """Save a Python object by pickling it."""
-    file_name = os.path.abspath(file_name)
-    with open(file_name, 'wb') as f:
+
+    with file_name.open('bw') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 

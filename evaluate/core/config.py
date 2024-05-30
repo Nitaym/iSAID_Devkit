@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import six
 import os
 import os.path as osp
 import copy
@@ -16,7 +15,7 @@ import torch.nn as nn
 from torch.nn import init
 import yaml
 
-import nn as mynn
+# import nn as mynn
 from utils.collections import AttrDict
 
 __C = AttrDict()

@@ -26,7 +26,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-from six.moves import cPickle as pickle
 import logging
 import numpy as np
 import os
@@ -53,20 +52,25 @@ logger = logging.getLogger(__name__)
 class JsonDataset(object):
     """A class representing a COCO json dataset."""
 
-    def __init__(self, name):
+    def __init__(self, name, annotation_filename=None, image_directory=None):
         assert name in DATASETS.keys(), \
             'Unknown dataset name: {}'.format(name)
-        assert os.path.exists(DATASETS[name][IM_DIR]), \
+        if annotation_filename is None:
+            annotation_filename = DATASETS[name][ANN_FN]
+        if image_directory is None:
+            image_directory = DATASETS[name][IM_DIR]
+
+        assert os.path.exists(image_directory), \
             'Image directory \'{}\' not found'.format(DATASETS[name][IM_DIR])
-        assert os.path.exists(DATASETS[name][ANN_FN]), \
+        assert os.path.exists(annotation_filename), \
             'Annotation file \'{}\' not found'.format(DATASETS[name][ANN_FN])
         logger.debug('Creating: {}'.format(name))
         self.name = name
-        self.image_directory = DATASETS[name][IM_DIR]
+        self.image_directory = image_directory
         self.image_prefix = (
             '' if IM_PREFIX not in DATASETS[name] else DATASETS[name][IM_PREFIX]
         )
-        self.COCO = COCO(DATASETS[name][ANN_FN])
+        self.COCO = COCO(annotation_filename)
         self.debug_timer = Timer()
         # Set up dataset classes
         #import pdb;pdb.set_trace()
